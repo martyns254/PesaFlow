@@ -8,7 +8,7 @@ Architecture diagram: [`architecture-diagram.svg`](./architecture-diagram.svg)
 
 ## What it does
 
-A client initiates a payment for a phone number and amount. `payment-service` records it as `PENDING` and sends a real STK Push through Safaricom's Daraja sandbox. The flow is asynchronous — Safaricom calls back later (30-90+ seconds) with the result, and only then does the payment resolve to `SUCCESS` or `FAILED`. On confirmed success, `payment-service` calls `wallet-service` over HTTP to credit that phone number's wallet — never optimistically, only after Daraja confirms the money moved.
+A client initiates a payment for a phone number and amount. `payment-service` records it as `PENDING` and sends a real STK Push through Safaricom's Daraja sandbox. The flow is asynchronous — Safaricom calls back later (30-90+ seconds) with the result, and only then does the payment resolve to `SUCCESS` or `FAILED`. On confirmed success, `payment-service` calls `wallet-service` over HTTP to credit that phone number's wallet — never optimistically, only after Daraja confirms the money moved
 
 ## Services
 

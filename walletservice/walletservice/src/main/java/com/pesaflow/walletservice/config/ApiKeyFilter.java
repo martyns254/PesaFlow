@@ -1,4 +1,4 @@
-package com.pesaflow.paymentservice.config;
+package com.pesaflow.walletservice.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,21 +13,14 @@ import java.io.IOException;
 @Component
 public class ApiKeyFilter extends OncePerRequestFilter {
 
-
     @Value("${pesaflow.api.key}")
     private String apiKey;
+
     private static final String HEADER_NAME = "X-API-KEY";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-        String path = request.getRequestURI();
-
-        if (path.equals("/api/payments/callback")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String providedKey = request.getHeader(HEADER_NAME);
 

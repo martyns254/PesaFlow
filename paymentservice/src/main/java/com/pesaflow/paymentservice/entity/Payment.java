@@ -15,6 +15,15 @@ public class Payment {
     private String status;
     private String mpesaReceiptNumber;
     private LocalDateTime createdAt;
+    private String checkoutRequestId;
+
+    public String getCheckoutRequestId() {
+        return checkoutRequestId;
+    }
+
+    public void setCheckoutRequestId(String checkoutRequestId) {
+        this.checkoutRequestId = checkoutRequestId;
+    }
 
     public Payment(){
 

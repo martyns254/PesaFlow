@@ -1,50 +1,62 @@
-PesaFlow
+# PesaFlow
 
-A microservices project built to learn Spring Boot the right way — Java, REST APIs, and service-to-service communication — using an M-Pesa-style payment flow as the working example. M-Pesa and the infrastructure behind Kenyan fintech is what this is built toward: two services that talk to each other over HTTP, each owning its own data, the same shape as the real thing at a much smaller scale.
+A microservices project built to learn Spring Boot the right way — Java, REST APIs, and service-to-service communication — using an M-Pesa-style payment flow as the working example. M-Pesa and the infrastructure behind Kenyan fintech is what this is built toward: two services that talk to each other over HTTP, each owning its own data, integrated with the real Safaricom Daraja sandbox.
 
 This is a learning project, not a production system — built with real layering and error handling rather than a single-file demo.
 
-Architecture diagram: architecture-diagram.svg
+Architecture diagram: [`architecture-diagram.svg`](./architecture-diagram.svg)
 
-What it does
+## What it does
 
-A client initiates a payment for a phone number and amount. payment-service records it, then calls wallet-service over HTTP to credit that phone number's wallet. No shared database, no shared code — only HTTP between them.
+A client initiates a payment for a phone number and amount. `payment-service` records it as `PENDING` and sends a real STK Push through Safaricom's Daraja sandbox. The flow is asynchronous — Safaricom calls back later (30-90+ seconds) with the result, and only then does the payment resolve to `SUCCESS` or `FAILED`. On confirmed success, `payment-service` calls `wallet-service` over HTTP to credit that phone number's wallet — never optimistically, only after Daraja confirms the money moved.
 
-Services
+## Services
 
-payment-service (port 8080)
+**payment-service** (port 8080)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/payments` | Start a payment: saves `PENDING`, sends STK Push |
+| GET | `/api/payments` | List all payments |
+| GET | `/api/payments/{id}` | Get one payment |
+| POST | `/api/payments/callback` | Receives Daraja's async result (no API key — Safaricom can't send one) |
 
-Method	Endpoint	Description
-POST	/api/payments	Create a payment, credit the matching wallet
-GET	/api/payments	List all payments
-GET	/api/payments/{id}	Get one payment
+**wallet-service** (port 8081)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/wallets?phoneNumber=...` | Create a wallet |
+| GET | `/api/wallets/{phoneNumber}` | Get balance |
+| POST | `/api/wallets/credit?phoneNumber=...&amount=...` | Credit a wallet |
+| POST | `/api/wallets/debit?phoneNumber=...&amount=...` | Debit, rejected if funds are insufficient |
 
-wallet-service (port 8081)
+## A few real decisions behind it
 
-Method	Endpoint	Description
-POST	/api/wallets?phoneNumber=...	Create a wallet
-GET	/api/wallets/{phoneNumber}	Get balance
-POST	/api/wallets/credit?phoneNumber=...&amount=...	Credit a wallet
-POST	/api/wallets/debit?phoneNumber=...&amount=...	Debit, rejected if funds are insufficient
-A few real decisions behind it
-DTOs on every request — a client can never set its own payment status
-Every credit/debit writes two records: the running balance, and a permanent transaction row (an audit trail, not just a number)
-If wallet-service is unreachable when a payment tries to credit it, the payment is marked FAILED, not silently left as SUCCESS
-Each service is its own Spring Boot app, own pom.xml, own port — genuinely independent, not just separated by folder
-Not done yet
+- Every endpoint requires an `X-API-KEY` header, including calls `payment-service` makes to `wallet-service` internally — securing a service breaks anything that calls it, including your own other services, and this project handles that rather than ignoring it
+- The Daraja callback endpoint is the one deliberate exception — Safaricom can't send a custom header, so it's left open by path
+- `CheckoutRequestID` is stored on the payment at STK Push time and used to match the later callback back to the right record — the two are separate HTTP requests, seconds to minutes apart
+- Every credit/debit writes two records: the running balance, and a permanent transaction row (an audit trail, not just a number)
+- If `wallet-service` is unreachable when a confirmed payment tries to credit it, the payment is marked `FAILED`, not silently left as `SUCCESS`
+- Each service is its own Spring Boot app, own `pom.xml`, own port — genuinely independent, not just separated by folder
 
-H2 in-memory only, no auth, no real Daraja/M-Pesa API call yet, no retries on the payment → wallet call, no API gateway.
+## Not done yet
 
-Roadmap
+H2 in-memory only, no notification service yet, no retries/circuit breaker on the payment → wallet call, no API gateway, Daraja "Go Live" (real Paybill, real phones) not applied for — sandbox only.
 
-API authentication → real Daraja sandbox integration → notification service → Postgres → resilience (retries/circuit breaker).
+## Roadmap
 
-Running locally
+Notification service → Postgres → resilience (retries/circuit breaker) → API gateway.
+
+## Running locally
+
+```
 cd paymentservice && ./mvnw spring-boot:run
 cd walletservice && ./mvnw spring-boot:run
+```
+Start `wallet-service` first. For Daraja callbacks to reach `payment-service` locally, tunnel it with `ngrok http 8080` and set `mpesa.callback.url` in `application.properties` to the generated URL — it changes on every Ngrok restart.
 
-Start wallet-service first — payment-service expects it at localhost:8081.
+## Stack
 
-Stack
+Java 17 · Spring Boot · Spring Data JPA · H2 · Maven · Safaricom Daraja API
 
-Java 17 · Spring Boot · Spring Data JPA · H2 · Maven
+## Author
+
+Martins Kosgei — [github.com/martyns254](https://github.com/martyns254)

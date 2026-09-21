@@ -1,6 +1,6 @@
 # PesaFlow
 
-A microservices project built to learn Spring Boot the right way — Java, REST APIs, and service-to-service communication — using an M-Pesa-style payment flow as the working example. M-Pesa and the infrastructure behind Kenyan fintech is what this is built toward: two services that talk to each other over HTTP, each owning its own PostgreSQL database, integrated with the real Safaricom Daraja sandbox.
+A microservices project built to learn Spring Boot the right way; Java, REST APIs, and service-to-service communication  using an M-Pesa-style payment flow as the working example. M-Pesa and the infrastructure behind Kenyan fintech is what this is built toward: two services that talk to each other over HTTP, each owning its own PostgreSQL database, integrated with the real Safaricom Daraja sandbox.
 
 This is a learning project, not a production system — built with real layering and error handling rather than a single-file demo.
 

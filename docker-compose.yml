@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  payment-service:
+    build: ./paymentservice
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pesaflow_payments
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      PESAFLOW_API_KEY: ${PESAFLOW_API_KEY}
+      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY}
+      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET}
+      MPESA_SHORTCODE: ${MPESA_SHORTCODE}
+      MPESA_PASSKEY: ${MPESA_PASSKEY}
+      MPESA_CALLBACK_URL: ${MPESA_CALLBACK_URL}
+    ports:
+      - "8080:8080"
+
+  wallet-service:
+    build: ./walletservice/walletservice
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pesaflow_wallets
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      PESAFLOW_API_KEY: ${PESAFLOW_API_KEY}
+    ports:
+      - "8081:8081"
+
+volumes:
+  pgdata:
+  

@@ -50,9 +50,9 @@ Automated testing (JUnit/Mockito) → Docker → notification service → resili
 Requires a local PostgreSQL instance with two databases created: `pesaflow_payments` and `pesaflow_wallets`. Set the connection details (URL, username, password) in each service's `application.properties`.
 
 ## Running with Docker
-
-```
 docker compose up --build
+- payment-service: http://localhost:8080
+- wallet-service:  http://localhost:8081
 
 ```
 cd paymentservice && ./mvnw spring-boot:run

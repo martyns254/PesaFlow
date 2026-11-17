@@ -28,7 +28,7 @@ A client initiates a payment for a phone number and amount. `payment-service` re
 | POST | `/api/wallets/credit?phoneNumber=...&amount=...` | Credit a wallet |
 | POST | `/api/wallets/debit?phoneNumber=...&amount=...` | Debit, rejected if funds are insufficient |
 
-## A few real decisions behind it
+## Real decisions behind it
 
 - Every endpoint requires an `X-API-KEY` header, including calls `payment-service` makes to `wallet-service` internally. Securing a service breaks anything that calls it, including your own other services, and this project handles that rather than ignoring it
 - The Daraja callback endpoint is the one deliberate exception, since Safaricom can't send a custom header, so it's left open by path
